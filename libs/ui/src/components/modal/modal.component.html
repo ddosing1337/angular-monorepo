@@ -1,0 +1,16 @@
+<!-- <div class="opacity-50 bg-gray-700 w-full h-full absolute"></div>
+<div class="model-content bg-white rounded-sm z-50 p-2">
+  <ng-content></ng-content>
+</div> -->
+
+<div
+  class="fixed top-0 left-0 w-full h-full bg-gray-700 flex justify-center items-center"
+  (click)="closeModal()"
+>
+  <div
+    class="bg-white p-2 rounded-sm w-full max-w-2xl"
+    (click)="$event.stopPropagation()"
+  >
+    <ng-content></ng-content>
+  </div>
+</div>

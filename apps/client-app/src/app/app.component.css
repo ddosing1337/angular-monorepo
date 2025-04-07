@@ -1,0 +1,20 @@
+:host {
+  display: flex;
+  height: 100%;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  width: 20%;
+  max-width: 350px;
+}
+.sidebar * {
+  width: 100%;
+}
+
+.main {
+  width: 100%;
+}

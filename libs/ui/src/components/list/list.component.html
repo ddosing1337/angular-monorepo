@@ -1,9 +1,7 @@
-<ul
-  class="list-container text-gray-900 bg-white border border-gray-200 rounded-lg"
->
+<ul class="text-gray-700 bg-white rounded-sm flex gap-1 flex-col w-full h-full">
   @for (option of options(); track option.id) {
   <button
-    class="relative inline-flex items-center w-full px-4 py-2 text-sm font-medium border-b border-gray-200 rounded-t-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700"
+    class="w-full items-center text-sm font-medium border-2 border-gray-200 rounded-sm hover:bg-gray-100 focus:border-blue-700 focus:text-blue-700 focus:bg-gray-100 p-1"
   >
     {{ option.title }}
   </button>

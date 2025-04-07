@@ -1,2 +1,13 @@
-<app-map> </app-map>
-<ui-list [options]="layers" titleField="title" idField="ol_uid"></ui-list>
+<div class="sidebar border-r-2 border-gray-200 p-1">
+  <ui-list [options]="layers" titleField="title" idField="ol_uid"></ui-list>
+  <ui-button (click)="onAddLayer()">Add layer</ui-button>
+</div>
+<div class="main">
+  <app-map></app-map>
+</div>
+
+@if(addLayerActive) {
+<ui-modal [(isActive)]="addLayerActive">
+  <input type="text" />
+</ui-modal>
+}
