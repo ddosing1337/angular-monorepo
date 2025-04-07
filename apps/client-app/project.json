@@ -21,7 +21,11 @@
             "input": "apps/client-app/public"
           }
         ],
-        "styles": ["apps/client-app/src/styles.css"],
+        "styles": [
+          "apps/client-app/src/styles.css",
+          "libs/ui/src/styles/main.css",
+          "node_modules/ol/ol.css"
+        ],
         "scripts": []
       },
       "configurations": {
