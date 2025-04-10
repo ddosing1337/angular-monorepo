@@ -1,11 +1,12 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  effect,
   input,
   model,
+  TemplateRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ListOption } from '../../interfaces/list-option.interface';
 
 @Component({
   selector: 'ui-list',
@@ -15,6 +16,6 @@ import { ListOption } from '../../interfaces/list-option.interface';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ListComponent {
-  public options = input<ListOption[]>([]);
-  public activeOption = model<number>(0);
+  public options = input<any[]>();
+  public optionTemplate = model<TemplateRef<any> | null>(null);
 }
