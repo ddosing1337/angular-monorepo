@@ -8,15 +8,49 @@
     >Add layer</ui-button
   >
 </div>
-<div class="main">
-  <app-map></app-map>
+<div class="main flex flex-col h-full w-full">
+  @if (layerEditActive()) {
+  <div
+    class="layer-edit-bar flex flex-row items-center p-1 justify-between h-16 border-b-2 border-gray-200"
+  >
+    <div class="flex flex-row gap-1">
+      <ui-select
+        [options]="layerEditOptions"
+        placeholder="Select option"
+        [(selected)]="selectedEditOption"
+        class="w-40 block"
+      ></ui-select>
+      <ui-button (click)="undoFeature()" class="w-16">Undo</ui-button>
+    </div>
+    <div class="flex flex-row gap-1">
+      <ui-button (click)="saveLayer()" class="w-16">Save</ui-button>
+      <ui-button (click)="cancelLayerEdit()" class="w-16">Cancel</ui-button>
+    </div>
+  </div>
+  }
+  <app-map class="flex-1"></app-map>
 </div>
 
 @if(addLayerActive()) {
 <ui-modal [(isActive)]="addLayerActive">
-  <ui-text-field placeholder="Name" [(value)]="newLayerName"></ui-text-field>
-  <ui-button (click)="addLayerActive.set(false)">Cancel</ui-button>
-  <ui-button [disabled]="!newLayerName()" (click)="addLayer()">Add</ui-button>
+  <div
+    class="add-layer-modal-container flex flex-row gap-1 flex-wrap justify-evenly"
+  >
+    <ui-text-field
+      placeholder="Name"
+      [(value)]="newLayerName"
+      class="w-full"
+    ></ui-text-field>
+    <ui-button
+      [disabled]="!newLayerName()"
+      (click)="addLayer()"
+      class="w-1/4 block"
+      >Add</ui-button
+    >
+    <ui-button (click)="addLayerActive.set(false)" class="w-1/4 block"
+      >Cancel</ui-button
+    >
+  </div>
 </ui-modal>
 }
 
@@ -27,12 +61,21 @@
       'border-blue-700 text-blue-700': selectedLayer() === option,
       'border-gray-200': selectedLayer() !== option
     }"
-    class="flex flex-column flex-wrap justify-evenly w-full text-sm font-medium border-2 rounded-sm p-1"
+    class="flex flex-column flex-wrap justify-evenly w-full text-sm font-medium border-2 rounded-sm p-1 cursor-pointer"
   >
     <div class="w-full">{{ option.get('name') }}</div>
-    <ui-button class="block w-1/3">Edit</ui-button>
-    <ui-button class="block w-1/3" (click)="deleteLayer(option)"
-      >Delete</ui-button
+    @if (option === selectedLayer()) {
+    <div
+      class="flex flex-row flex-wrap w-full border-2 border-gray-200 rounded-sm mb-1 mt-1"
     >
+      @for (feature of featuresArray(); track feature) {
+      <div class="w-full text-gray-700">{{ feature | FeaturePipe }}</div>
+      } @empty {
+      <div class="w-full text-gray-700">No features added</div>
+      }
+    </div>
+    <ui-button class="block w-1/3" (click)="editLayer()">Edit</ui-button>
+    <ui-button class="block w-1/3" (click)="deleteLayer()">Delete</ui-button>
+    }
   </button>
 </ng-template>
