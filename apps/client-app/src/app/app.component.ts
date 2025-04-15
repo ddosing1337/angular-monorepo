@@ -71,7 +71,6 @@ export class AppComponent {
   constructor(private zone: NgZone) {
     effect(() => {
       this.map.removeInteraction(this.draw);
-      console.log('interaction removed');
       this.addInteraction(this.selectedEditOption());
     });
   }
@@ -161,8 +160,6 @@ export class AppComponent {
   }
 
   public saveLayer(): void {
-    //combine temp source and original one
-    console.log(`save`, this.tempLayer.get('source').getFeatures());
     untracked(() => {
       this.selectedLayer()
         ?.get('source')
@@ -181,7 +178,6 @@ export class AppComponent {
         type: type,
       });
       this.map.addInteraction(this.draw);
-      console.log('interaction added', this.draw);
     }
   }
 

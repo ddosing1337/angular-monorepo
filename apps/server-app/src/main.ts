@@ -1,21 +1,27 @@
-/**
- * This is not a production server yet!
- * This is only a minimal backend to get started.
- */
-
 import express from 'express';
-import * as path from 'path';
+import cors from 'cors';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import { createHandler } from 'graphql-http/lib/use/express';
+import { schema } from './graphql/schema';
+
+dotenv.config();
 
 const app = express();
+const port = process.env.PORT || 4000;
 
-app.use('/assets', express.static(path.join(__dirname, 'assets')));
+// Middleware
+app.use(cors());
+app.use(express.json());
 
-app.get('/api', (req, res) => {
-  res.send({ message: 'Welcome to server-app!' });
+// MongoDB connection
+mongoose.connect(process.env.MONGO_URI as string).then(() => {
+  console.log('✅ MongoDB connected');
 });
 
-const port = process.env.PORT || 3333;
-const server = app.listen(port, () => {
-  console.log(`Listening at http://localhost:${port}/api`);
+// GraphQL endpoint using graphql-http
+app.all('/graphql', createHandler({ schema }));
+
+app.listen(port, () => {
+  console.log(`🚀 Server ready at http://localhost:${port}/graphql`);
 });
-server.on('error', console.error);
