@@ -13,24 +13,21 @@
   <div
     class="layer-edit-bar flex flex-row items-center p-1 justify-between h-16 border-b-2 border-gray-200"
   >
-    <ui-select
-      [options]="layerEditOptions"
-      placeholder="Select option"
-      [(selected)]="selectedEditOption"
-      class="w-40 block"
-    ></ui-select>
+    <div class="flex flex-row gap-1">
+      <ui-select
+        [options]="layerEditOptions"
+        placeholder="Select option"
+        [(selected)]="selectedEditOption"
+        class="w-40 block"
+      ></ui-select>
+      <ui-button (click)="undoFeature()" class="w-16">Undo</ui-button>
+    </div>
     <div class="flex flex-row gap-1">
       <ui-button (click)="saveLayer()" class="w-16">Save</ui-button>
       <ui-button (click)="cancelLayerEdit()" class="w-16">Cancel</ui-button>
     </div>
   </div>
   }
-  <!-- <ui-select
-      [options]="layerEditOptions"
-      placeholder="Select option"
-      [(selected)]="selectedEditOption"
-      class="w-40 block"
-    ></ui-select> -->
   <app-map class="flex-1"></app-map>
 </div>
 
@@ -68,10 +65,17 @@
   >
     <div class="w-full">{{ option.get('name') }}</div>
     @if (option === selectedLayer()) {
-    <ui-button class="block w-1/3" (click)="editLayer(option)">Edit</ui-button>
-    <ui-button class="block w-1/3" (click)="deleteLayer(option)"
-      >Delete</ui-button
+    <div
+      class="flex flex-row flex-wrap w-full border-2 border-gray-200 rounded-sm mb-1 mt-1"
     >
+      @for (feature of featuresArray(); track feature) {
+      <div class="w-full text-gray-700">{{ feature | FeaturePipe }}</div>
+      } @empty {
+      <div class="w-full text-gray-700">No features added</div>
+      }
+    </div>
+    <ui-button class="block w-1/3" (click)="editLayer()">Edit</ui-button>
+    <ui-button class="block w-1/3" (click)="deleteLayer()">Delete</ui-button>
     }
   </button>
 </ng-template>

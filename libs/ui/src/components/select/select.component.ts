@@ -20,6 +20,6 @@ export class SelectComponent {
   public selected = model<any>();
 
   public onSelectionChange(event: Event) {
-    console.log((event.target as HTMLSelectElement).value);
+    this.selected.set((event.target as HTMLSelectElement).value);
   }
 }

@@ -1,4 +1,12 @@
-import { Component, effect, signal, untracked } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  effect,
+  NgZone,
+  signal,
+  untracked,
+  WritableSignal,
+} from '@angular/core';
 import { RouterModule } from '@angular/router';
 import {
   ButtonComponent,
@@ -8,18 +16,21 @@ import {
   TextFieldComponent,
 } from '@angular-monorepo/ui';
 import { MapComponent } from './commponents/map/map.component';
-import { Map, View } from 'ol';
+import { Collection, Feature, getUid, Map, View } from 'ol';
 import Draw from 'ol/interaction/Draw';
 import { defaults, FullScreen } from 'ol/control';
 import TileLayer from 'ol/layer/Tile';
 import { OSM } from 'ol/source';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
-import BaseLayer from 'ol/layer/Base';
+import { Layer } from 'ol/layer';
 import { CommonModule } from '@angular/common';
 import { SelectOption } from 'libs/ui/src/interfaces/select-option.interface';
+import { FeaturePipe } from './pipes/feature.pipe';
+import BaseLayer from 'ol/layer/Base';
 
 enum FeatureType {
+  None = 'None',
   Point = 'Point',
   LineString = 'LineString',
   Polygon = 'Polygon',
@@ -36,27 +47,31 @@ enum FeatureType {
     ModalComponent,
     TextFieldComponent,
     SelectComponent,
+    FeaturePipe,
   ],
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent {
   title = 'client-app';
   public map!: Map;
-  public layers: BaseLayer[] = [];
-  public selectedLayer = signal<BaseLayer | null>(null);
+  public layers: Array<Layer> = [];
+  public selectedLayer = signal<Layer | null>(null);
   public layerEditActive = signal<boolean>(false);
-  public selectedEditOption = signal<any>(null);
+  public selectedEditOption = signal<FeatureType>(FeatureType.None);
   public addLayerActive = signal<boolean>(false);
   public newLayerName = signal<string>('');
   public layerEditOptions!: SelectOption[];
+  public featuresArray: WritableSignal<Array<Feature>> = signal([]);
+  public tempLayer!: VectorLayer;
   private draw!: Draw;
 
-  constructor() {
+  constructor(private zone: NgZone) {
     effect(() => {
-      console.log('effect');
-      console.log(this.selectedEditOption());
+      this.map.removeInteraction(this.draw);
+      this.addInteraction(this.selectedEditOption());
     });
   }
 
@@ -73,21 +88,28 @@ export class AppComponent {
     });
     rasterLayer.set('name', 'Default Raster Layer');
 
-    this.map = new Map({
-      controls: defaults().extend([new FullScreen()]),
-      target: 'map',
-      layers: [rasterLayer],
-      view: new View({
-        center: [0, 0],
-        zoom: 2,
-      }),
+    this.zone.runOutsideAngular(() => {
+      this.map = new Map({
+        controls: defaults().extend([new FullScreen()]),
+        target: 'map',
+        layers: [rasterLayer],
+        view: new View({
+          center: [0, 0],
+          zoom: 2,
+        }),
+      });
     });
     this.refreshLayers();
   }
 
   public addLayer(): void {
+    this.cancelLayerEdit();
     const newLayer = new VectorLayer({
-      source: new VectorSource({ wrapX: false }),
+      source: new VectorSource({
+        features: new Collection<Feature>(),
+        wrapX: false,
+      }),
+      visible: false,
     });
     newLayer.set(
       'name',
@@ -99,35 +121,72 @@ export class AppComponent {
     this.newLayerName.set('');
   }
 
-  public deleteLayer(layer: BaseLayer): void {
-    this.map.removeLayer(layer);
+  public deleteLayer(): void {
+    this.map.removeLayer(
+      untracked(() => {
+        return this.selectedLayer() as BaseLayer;
+      })
+    );
     this.refreshLayers();
   }
 
-  public editLayer(layer: BaseLayer): void {
-    console.log(`edit`);
-    console.log(layer.get('source'));
+  public editLayer(): void {
+    this.tempLayer = new VectorLayer({
+      source: new VectorSource({
+        features: new Collection<Feature>(),
+        wrapX: false,
+      }),
+    });
+    this.map.addLayer(this.tempLayer);
     this.layerEditActive.set(true);
   }
 
-  public selectLayer(layer: BaseLayer): void {
-    //question
+  public selectLayer(layer: Layer): void {
     if (layer !== untracked(() => this.selectedLayer())) {
       this.cancelLayerEdit();
+      untracked(() => {
+        this.selectedLayer()?.setVisible(false);
+      });
+      layer.setVisible(true);
       this.selectedLayer.set(layer);
     }
+    this.featuresArray.set(layer.get('source').getFeatures());
   }
 
   public cancelLayerEdit(): void {
+    this.map.removeLayer(this.tempLayer);
     this.layerEditActive.set(false);
+    this.selectedEditOption.set(FeatureType.None);
   }
 
   public saveLayer(): void {
+    untracked(() => {
+      this.selectedLayer()
+        ?.get('source')
+        .addFeatures(this.tempLayer.get('source').getFeatures());
+      this.map.removeLayer(this.tempLayer);
+      this.featuresArray.set(this.selectedLayer()?.get('source').getFeatures());
+    });
     this.layerEditActive.set(false);
+    this.selectedEditOption.set(FeatureType.None);
   }
 
-  private refreshLayers() {
-    this.layers = Array.from(this.map.getLayers().getArray()).slice(1);
+  public addInteraction(type: FeatureType): void {
+    if (type !== FeatureType.None) {
+      this.draw = new Draw({
+        source: this.tempLayer.get('source'),
+        type: type,
+      });
+      this.map.addInteraction(this.draw);
+    }
+  }
+
+  public undoFeature(): void {
+    this.tempLayer.get('source').getFeaturesCollection().pop();
+  }
+
+  private refreshLayers(): void {
+    this.layers = this.map.getAllLayers().slice(1);
     if (this.layers.length !== 0) {
       this.selectLayer(this.layers[0]);
     }
