@@ -7,12 +7,9 @@ import {
   GraphQLNonNull,
   GraphQLInputObjectType,
   GraphQLBoolean,
-  GraphQLFloat,
 } from 'graphql';
 import { LayerModel } from '../models/layer.model';
 import GraphQLJSON, { GraphQLJSONObject } from 'graphql-type-json';
-
-// === Geometry ===
 
 const Geometry = new GraphQLObjectType({
   name: 'Geometry',
@@ -33,8 +30,6 @@ const GeometryInput = new GraphQLInputObjectType({
     },
   },
 });
-
-// === Feature ===
 
 const Feature = new GraphQLObjectType({
   name: 'Feature',
@@ -65,8 +60,6 @@ const UpdateFeatureInput = new GraphQLInputObjectType({
   },
 });
 
-// === Layer ===
-
 const Layer = new GraphQLObjectType({
   name: 'Layer',
   fields: {
@@ -92,8 +85,6 @@ const UpdateLayerInput = new GraphQLInputObjectType({
   },
 });
 
-// === Query ===
-
 const Query = new GraphQLObjectType({
   name: 'Query',
   fields: {
@@ -108,8 +99,6 @@ const Query = new GraphQLObjectType({
     },
   },
 });
-
-// === Mutation ===
 
 const Mutation = new GraphQLObjectType({
   name: 'Mutation',
@@ -150,8 +139,6 @@ const Mutation = new GraphQLObjectType({
     },
   },
 });
-
-// === Schema ===
 
 export const schema = new GraphQLSchema({
   query: Query,

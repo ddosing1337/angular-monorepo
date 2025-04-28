@@ -5,6 +5,8 @@ import VectorSource from 'ol/source/Vector';
 import { Observable, map } from 'rxjs';
 import { GeoJSON } from 'ol/format';
 import { Feature } from 'ol';
+import { fromCircle } from 'ol/geom/Polygon';
+import { Circle } from 'ol/geom';
 
 @Injectable()
 export class LayersService {
@@ -31,7 +33,7 @@ export class LayersService {
             }
           }
         `,
-        fetchPolicy: 'network-only', // гарантирует запрос с сервера, не из кэша
+        fetchPolicy: 'network-only',
       })
       .pipe(
         map((result) =>
@@ -92,9 +94,21 @@ export class LayersService {
             features: layer
               .get('source')
               .getFeatures()
-              .map((feature: Feature) =>
-                this.geojson.writeFeatureObject(feature)
-              ),
+              .map((feature: Feature) => {
+                const geometry = feature.getGeometry();
+                const geometryType = geometry?.getType();
+                if (geometryType === 'Circle') {
+                  const mapped = new Feature();
+                  mapped.setProperties({
+                    isCircle: true,
+                    center: (geometry as Circle).getCenter(),
+                    radius: (geometry as Circle).getRadius(),
+                  });
+                  mapped.setGeometry(fromCircle(geometry as Circle, 1));
+                  return this.geojson.writeFeatureObject(mapped);
+                }
+                return this.geojson.writeFeatureObject(feature);
+              }),
           },
         },
       })
@@ -117,16 +131,29 @@ export class LayersService {
   private toVectorLayer(srcLayer: any): VectorLayer {
     const layer = new VectorLayer({
       source: new VectorSource({
-        features: this.geojson.readFeatures({
-          type: 'FeatureCollection',
-          features: srcLayer.features,
-        }),
+        features: this.geojson
+          .readFeatures({
+            type: 'FeatureCollection',
+            features: srcLayer.features,
+          })
+          .map((feature) => {
+            const properties = feature.getProperties();
+            if (properties['isCircle']) {
+              const mapped = feature;
+              mapped.setGeometry(
+                new Circle(properties['center'], properties['radius'])
+              );
+              return mapped;
+            }
+            return feature;
+          }),
         wrapX: false,
       }),
       visible: false,
     });
     layer.set('name', srcLayer.name);
     layer.set('id', srcLayer.id);
+
     return layer;
   }
 }

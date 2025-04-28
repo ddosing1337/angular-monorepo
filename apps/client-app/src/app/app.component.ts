@@ -33,23 +33,16 @@ import Transform from 'ol-ext/interaction/Transform';
 import Tooltip from 'ol-ext/overlay/Tooltip';
 import { toLonLat } from 'ol/proj';
 import { getArea, getLength } from 'ol/sphere';
-import { Geometry, Point } from 'ol/geom';
-import {
-  debounceTime,
-  fromEventPattern,
-  Subject,
-  takeUntil,
-  throttleTime,
-  timer,
-} from 'rxjs';
+import { Circle, Geometry, Point } from 'ol/geom';
+import { fromEventPattern, Subject, takeUntil, throttleTime } from 'rxjs';
+import { fromCircle } from 'ol/geom/Polygon';
 
 enum FeatureType {
   None = 'None',
   Point = 'Point',
   LineString = 'LineString',
   Polygon = 'Polygon',
-  //feat: add circly compatibility
-  //Circle = 'Circle',
+  Circle = 'Circle',
 }
 
 @Component({
@@ -74,7 +67,7 @@ export class AppComponent {
   title = 'client-app';
   public map!: Map;
   public layers = signal<Array<Layer>>([]);
-  public selectedLayer = signal<VectorLayer | null>(null); //
+  public selectedLayer = signal<VectorLayer | null>(null);
   public layerEditActive = signal<boolean>(false);
   public selectedEditOption = signal<FeatureType>(FeatureType.None);
   public addLayerActive = signal<boolean>(false);
@@ -153,8 +146,14 @@ export class AppComponent {
         } else if (type?.includes('Polygon')) {
           const area = getArea(geom, { projection });
           html = `Площадь: ${(area / 1_000_000).toFixed(2)} км²`;
+        } else if (type?.includes('Circle')) {
+          const area = getArea(fromCircle(geom as Circle, 64), { projection });
+          html = `Площадь: ${(area / 1_000_000).toFixed(2)} км²`;
         }
-        this.tooltip.show(evt.coordinate, html);
+        this.tooltip.show(
+          evt.coordinate,
+          `${new FeaturePipe().transform(feature as Feature)}<br/>` + html
+        );
         found = true;
         return true;
       });
@@ -298,50 +297,3 @@ export class AppComponent {
     }
   }
 }
-
-// const raster = new TileLayer({
-//   source: new OSM(),
-// });
-
-// const source = new VectorSource({wrapX: false});
-
-// const vector = new VectorLayer({
-//   source: source,
-// });
-
-// const map = new Map({
-//   layers: [raster, vector],
-//   target: 'map',
-//   view: new View({
-//     center: [-11000000, 4600000],
-//     zoom: 4,
-//   }),
-// });
-
-// const typeSelect = document.getElementById('type');
-
-// let draw; // global so we can remove it later
-// function addInteraction() {
-//   const value = typeSelect.value;
-//   if (value !== 'None') {
-//     draw = new Draw({
-//       source: source,
-//       type: typeSelect.value,
-//     });
-//     map.addInteraction(draw);
-//   }
-// }
-
-// /**
-//  * Handle change event.
-//  */
-// typeSelect.onchange = function () {
-//   map.removeInteraction(draw);
-//   addInteraction();
-// };
-
-// document.getElementById('undo').addEventListener('click', function () {
-//   draw.removeLastPoint();
-// });
-
-// addInteraction();
