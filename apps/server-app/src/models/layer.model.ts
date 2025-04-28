@@ -1,41 +1,69 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model, Document, ObjectId } from 'mongoose';
 
 export interface Geometry {
   type: string;
-  coordinates: any;
+  coordinates: any; //refactor: replace with type
 }
 
-export interface FeatureType {
+export interface Feature {
+  _id: ObjectId;
   type: string;
   geometry: Geometry;
-  properties?: any;
+  properties: any;
 }
 
-export interface LayerDocument extends Document {
+export interface Layer extends Document {
   name: string;
-  features: FeatureType[];
+  features: Feature[];
 }
 
-const GeometrySchema = new Schema<Geometry>(
+const GeomentrySchema = new Schema(
   {
     type: { type: String, required: true },
-    coordinates: { type: Schema.Types.Mixed, required: true },
+    coordinates: { type: [], required: true }, //refactor: replace with type
   },
   { _id: false }
 );
 
-const FeatureSchema = new Schema<FeatureType>(
+const FeatureSchema = new Schema(
   {
     type: { type: String, default: 'Feature' },
-    geometry: GeometrySchema,
+    geometry: {
+      type: GeomentrySchema,
+      required: true,
+    },
     properties: { type: Schema.Types.Mixed },
   },
-  { _id: false }
+  {
+    _id: true,
+    toJSON: {
+      virtuals: true,
+      transform: (_, ret) => {
+        ret.id = ret._id;
+        delete ret._id;
+      },
+    },
+  }
 );
 
-const LayerSchema = new Schema<LayerDocument>({
-  name: { type: String, required: true },
-  features: [FeatureSchema],
-});
+const LayerSchema = new Schema<Layer>(
+  {
+    name: { type: String, required: true },
+    features: {
+      type: [FeatureSchema],
+      default: [],
+    },
+  },
+  {
+    toJSON: {
+      virtuals: true,
+      versionKey: false,
+      transform: (_, ret) => {
+        ret.id = ret._id;
+        delete ret._id;
+      },
+    },
+  }
+);
 
-export const LayerModel = model<LayerDocument>('Layer', LayerSchema);
+export const LayerModel = model<Layer>('Layer', LayerSchema);

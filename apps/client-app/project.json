@@ -24,7 +24,8 @@
         "styles": [
           "apps/client-app/src/styles.css",
           "libs/ui/src/styles/main.css",
-          "node_modules/ol/ol.css"
+          "node_modules/ol/ol.css",
+          "node_modules/ol-ext/dist/ol-ext.css"
         ],
         "scripts": []
       },

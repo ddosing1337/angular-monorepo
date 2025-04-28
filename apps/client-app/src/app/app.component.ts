@@ -16,7 +16,7 @@ import {
   TextFieldComponent,
 } from '@angular-monorepo/ui';
 import { MapComponent } from './commponents/map/map.component';
-import { Collection, Feature, getUid, Map, View } from 'ol';
+import { Collection, Feature, Map, View } from 'ol';
 import Draw from 'ol/interaction/Draw';
 import { defaults, FullScreen } from 'ol/control';
 import TileLayer from 'ol/layer/Tile';
@@ -28,13 +28,28 @@ import { CommonModule } from '@angular/common';
 import { SelectOption } from 'libs/ui/src/interfaces/select-option.interface';
 import { FeaturePipe } from './pipes/feature.pipe';
 import BaseLayer from 'ol/layer/Base';
+import { LayersService } from './services/layers.service';
+import Transform from 'ol-ext/interaction/Transform';
+import Tooltip from 'ol-ext/overlay/Tooltip';
+import { toLonLat } from 'ol/proj';
+import { getArea, getLength } from 'ol/sphere';
+import { Geometry, Point } from 'ol/geom';
+import {
+  debounceTime,
+  fromEventPattern,
+  Subject,
+  takeUntil,
+  throttleTime,
+  timer,
+} from 'rxjs';
 
 enum FeatureType {
   None = 'None',
   Point = 'Point',
   LineString = 'LineString',
   Polygon = 'Polygon',
-  Circle = 'Circle',
+  //feat: add circly compatibility
+  //Circle = 'Circle',
 }
 
 @Component({
@@ -49,6 +64,7 @@ enum FeatureType {
     SelectComponent,
     FeaturePipe,
   ],
+  providers: [LayersService],
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
@@ -57,8 +73,8 @@ enum FeatureType {
 export class AppComponent {
   title = 'client-app';
   public map!: Map;
-  public layers: Array<Layer> = [];
-  public selectedLayer = signal<Layer | null>(null);
+  public layers = signal<Array<Layer>>([]);
+  public selectedLayer = signal<VectorLayer | null>(null); //
   public layerEditActive = signal<boolean>(false);
   public selectedEditOption = signal<FeatureType>(FeatureType.None);
   public addLayerActive = signal<boolean>(false);
@@ -66,9 +82,12 @@ export class AppComponent {
   public layerEditOptions!: SelectOption[];
   public featuresArray: WritableSignal<Array<Feature>> = signal([]);
   public tempLayer!: VectorLayer;
+  private destroy$ = new Subject();
   private draw!: Draw;
+  private transform!: Transform;
+  private tooltip!: Tooltip;
 
-  constructor(private zone: NgZone) {
+  constructor(private zone: NgZone, private layersService: LayersService) {
     effect(() => {
       this.map.removeInteraction(this.draw);
       this.addInteraction(this.selectedEditOption());
@@ -80,6 +99,11 @@ export class AppComponent {
     this.layerEditOptions = Object.entries(FeatureType).map((e) => {
       return { label: e[0], value: e[1] };
     });
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next('');
+    this.destroy$.complete();
   }
 
   private initMap(): void {
@@ -99,7 +123,62 @@ export class AppComponent {
         }),
       });
     });
-    this.refreshLayers();
+
+    this.layersService.getLayers().subscribe((res) => {
+      res.forEach((layer) => this.map.addLayer(layer));
+      this.refreshLayers();
+    });
+
+    this.tooltip = new Tooltip();
+    this.map.addOverlay(this.tooltip);
+
+    //Tooltip tracking
+    this.map.on('singleclick', (evt) => {
+      if (untracked(() => this.layerEditActive())) {
+        return;
+      }
+      let found = false;
+      this.map.forEachFeatureAtPixel(evt.pixel, (feature) => {
+        const geom = feature.getGeometry() as Geometry;
+        const type = geom?.getType();
+        const projection = this.map.getView().getProjection();
+        let html = '';
+
+        if (type === 'Point') {
+          const coord = toLonLat((geom as Point).getCoordinates(), projection);
+          html = `Координаты: ${coord[0].toFixed(6)}, ${coord[1].toFixed(6)}`;
+        } else if (type?.includes('Line')) {
+          const length = getLength(geom, { projection });
+          html = `Длина: ${(length / 1000).toFixed(2)} км`;
+        } else if (type?.includes('Polygon')) {
+          const area = getArea(geom, { projection });
+          html = `Площадь: ${(area / 1_000_000).toFixed(2)} км²`;
+        }
+        this.tooltip.show(evt.coordinate, html);
+        found = true;
+        return true;
+      });
+
+      if (!found) {
+        this.tooltip.hide();
+      }
+    });
+
+    //Cursor: pointer on hover
+    const pointerMove$ = fromEventPattern<PointerEvent>(
+      (handler) => this.map.on('pointermove', handler),
+      (handler) => this.map.un('pointermove', handler)
+    );
+
+    pointerMove$
+      .pipe(throttleTime(100), takeUntil(this.destroy$))
+      .subscribe((event: any) => {
+        const hasFeature = this.map.forEachFeatureAtPixel(
+          event.pixel,
+          () => true
+        );
+        this.map.getTargetElement().style.cursor = hasFeature ? 'pointer' : '';
+      });
   }
 
   public addLayer(): void {
@@ -115,19 +194,29 @@ export class AppComponent {
       'name',
       untracked(() => this.newLayerName())
     );
-    this.map.addLayer(newLayer);
-    this.refreshLayers();
-    this.addLayerActive.set(false);
-    this.newLayerName.set('');
+    this.layersService.createLayer(newLayer).subscribe((res) => {
+      //feat: handle creating errors
+      this.map.addLayer(res);
+      this.refreshLayers();
+      this.addLayerActive.set(false);
+      this.newLayerName.set('');
+    });
   }
 
   public deleteLayer(): void {
-    this.map.removeLayer(
-      untracked(() => {
-        return this.selectedLayer() as BaseLayer;
-      })
-    );
-    this.refreshLayers();
+    untracked(() => {});
+
+    this.layersService
+      .deleteLayer(this.selectedLayer()?.get('id'))
+      .subscribe((res) => {
+        //feat: handle deleting errors
+        this.map.removeLayer(
+          untracked(() => {
+            return this.selectedLayer() as BaseLayer;
+          })
+        );
+        this.refreshLayers();
+      });
   }
 
   public editLayer(): void {
@@ -138,10 +227,20 @@ export class AppComponent {
       }),
     });
     this.map.addLayer(this.tempLayer);
+
+    this.transform = new Transform({
+      layers: [this.tempLayer, untracked(() => this.selectedLayer())!],
+      translate: true,
+      scale: true,
+      rotate: true,
+      enableRotatedTransform: true,
+    });
+    this.map.addInteraction(this.transform);
+
     this.layerEditActive.set(true);
   }
 
-  public selectLayer(layer: Layer): void {
+  public selectLayer(layer: VectorLayer): void {
     if (layer !== untracked(() => this.selectedLayer())) {
       this.cancelLayerEdit();
       untracked(() => {
@@ -155,6 +254,7 @@ export class AppComponent {
 
   public cancelLayerEdit(): void {
     this.map.removeLayer(this.tempLayer);
+    this.map.removeInteraction(this.transform);
     this.layerEditActive.set(false);
     this.selectedEditOption.set(FeatureType.None);
   }
@@ -164,11 +264,17 @@ export class AppComponent {
       this.selectedLayer()
         ?.get('source')
         .addFeatures(this.tempLayer.get('source').getFeatures());
-      this.map.removeLayer(this.tempLayer);
-      this.featuresArray.set(this.selectedLayer()?.get('source').getFeatures());
+      this.layersService.updateLayer(this.selectedLayer()!).subscribe((res) => {
+        //feat: handle saving error
+        this.map.removeLayer(this.tempLayer);
+        this.featuresArray.set(
+          this.selectedLayer()?.get('source').getFeatures()
+        );
+        this.map.removeInteraction(this.transform);
+        this.layerEditActive.set(false);
+        this.selectedEditOption.set(FeatureType.None);
+      });
     });
-    this.layerEditActive.set(false);
-    this.selectedEditOption.set(FeatureType.None);
   }
 
   public addInteraction(type: FeatureType): void {
@@ -186,9 +292,9 @@ export class AppComponent {
   }
 
   private refreshLayers(): void {
-    this.layers = this.map.getAllLayers().slice(1);
-    if (this.layers.length !== 0) {
-      this.selectLayer(this.layers[0]);
+    this.layers.set(this.map.getAllLayers().slice(1));
+    if (untracked(() => this.layers().length) !== 0) {
+      this.selectLayer(untracked(() => this.layers()[0] as VectorLayer));
     }
   }
 }

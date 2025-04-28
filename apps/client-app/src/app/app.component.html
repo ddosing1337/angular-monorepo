@@ -1,7 +1,7 @@
 <div class="sidebar border-r-2 border-gray-200 p-1">
   <ui-list
     class="w-full"
-    [options]="layers"
+    [options]="layers()"
     [optionTemplate]="layerTemplate"
   ></ui-list>
   <ui-button class="w-full" (click)="addLayerActive.set(true)"
@@ -28,7 +28,9 @@
     </div>
   </div>
   }
-  <app-map class="flex-1"></app-map>
+  <app-map class="flex-1">
+    <!-- <div class="map-tooltip"></div> -->
+  </app-map>
 </div>
 
 @if(addLayerActive()) {

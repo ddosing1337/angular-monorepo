@@ -1,100 +1,159 @@
 import {
+  GraphQLSchema,
   GraphQLObjectType,
+  GraphQLID,
   GraphQLString,
   GraphQLList,
-  GraphQLSchema,
-  GraphQLID,
   GraphQLNonNull,
-  GraphQLFloat,
   GraphQLInputObjectType,
+  GraphQLBoolean,
+  GraphQLFloat,
 } from 'graphql';
 import { LayerModel } from '../models/layer.model';
+import GraphQLJSON, { GraphQLJSONObject } from 'graphql-type-json';
 
-const GeometryInputType = new GraphQLInputObjectType({
+// === Geometry ===
+
+const Geometry = new GraphQLObjectType({
+  name: 'Geometry',
+  fields: {
+    type: { type: new GraphQLNonNull(GraphQLString) },
+    coordinates: {
+      type: new GraphQLNonNull(GraphQLJSON),
+    },
+  },
+});
+
+const GeometryInput = new GraphQLInputObjectType({
   name: 'GeometryInput',
   fields: {
     type: { type: new GraphQLNonNull(GraphQLString) },
     coordinates: {
-      type: new GraphQLNonNull(new GraphQLList(new GraphQLList(GraphQLFloat))),
+      type: new GraphQLNonNull(GraphQLJSON),
     },
   },
 });
 
-const FeatureInputType = new GraphQLInputObjectType({
-  name: 'FeatureInput',
-  fields: {
-    type: { type: new GraphQLNonNull(GraphQLString) },
-    geometry: { type: new GraphQLNonNull(GeometryInputType) },
-    properties: { type: GraphQLString },
-  },
-});
+// === Feature ===
 
-const FeatureType = new GraphQLObjectType({
+const Feature = new GraphQLObjectType({
   name: 'Feature',
   fields: {
-    type: { type: GraphQLString },
-    geometry: new GraphQLObjectType({
-      name: 'Geometry',
-      fields: {
-        type: { type: GraphQLString },
-        coordinates: { type: new GraphQLList(new GraphQLList(GraphQLFloat)) },
-      },
-    }),
-    properties: { type: GraphQLString },
+    id: { type: new GraphQLNonNull(GraphQLID) },
+    type: { type: new GraphQLNonNull(GraphQLString) },
+    geometry: { type: new GraphQLNonNull(Geometry) },
+    properties: { type: GraphQLJSONObject },
   },
 });
 
-const LayerType = new GraphQLObjectType({
-  name: 'Layer',
+const CreateFeatureInput = new GraphQLInputObjectType({
+  name: 'CreateFeatureInput',
+  fields: {
+    type: { type: GraphQLString },
+    geometry: { type: new GraphQLNonNull(GeometryInput) },
+    properties: { type: GraphQLJSONObject },
+  },
+});
+
+const UpdateFeatureInput = new GraphQLInputObjectType({
+  name: 'UpdateFeatureInput',
   fields: {
     id: { type: GraphQLID },
-    name: { type: GraphQLString },
-    features: { type: new GraphQLList(FeatureType) },
+    type: { type: GraphQLString },
+    geometry: { type: new GraphQLNonNull(GeometryInput) },
+    properties: { type: GraphQLJSONObject },
   },
 });
 
-const RootQuery = new GraphQLObjectType({
-  name: 'RootQueryType',
+// === Layer ===
+
+const Layer = new GraphQLObjectType({
+  name: 'Layer',
   fields: {
-    layers: {
-      type: new GraphQLList(LayerType),
+    id: { type: new GraphQLNonNull(GraphQLID) },
+    name: { type: new GraphQLNonNull(GraphQLString) },
+    features: { type: new GraphQLList(Feature) },
+  },
+});
+
+const CreateLayerInput = new GraphQLInputObjectType({
+  name: 'LayerInput',
+  fields: {
+    name: { type: new GraphQLNonNull(GraphQLString) },
+    features: { type: new GraphQLList(CreateFeatureInput) },
+  },
+});
+
+const UpdateLayerInput = new GraphQLInputObjectType({
+  name: 'UpdateLayerInput',
+  fields: {
+    name: { type: GraphQLString },
+    features: { type: new GraphQLList(UpdateFeatureInput) },
+  },
+});
+
+// === Query ===
+
+const Query = new GraphQLObjectType({
+  name: 'Query',
+  fields: {
+    getLayers: {
+      type: new GraphQLList(Layer),
       resolve: () => LayerModel.find(),
+    },
+    getLayer: {
+      type: Layer,
+      args: { id: { type: new GraphQLNonNull(GraphQLID) } },
+      resolve: (_, { id }) => LayerModel.findById(id),
     },
   },
 });
+
+// === Mutation ===
 
 const Mutation = new GraphQLObjectType({
   name: 'Mutation',
   fields: {
-    addLayer: {
-      type: LayerType,
-      args: { name: { type: new GraphQLNonNull(GraphQLString) } },
-      resolve: (_, { name }) => new LayerModel({ name, features: [] }).save(),
-    },
-    deleteLayer: {
-      type: LayerType,
-      args: { id: { type: new GraphQLNonNull(GraphQLID) } },
-      resolve: (_, { id }) => LayerModel.findByIdAndDelete(id),
+    createLayer: {
+      type: Layer,
+      args: {
+        input: { type: new GraphQLNonNull(CreateLayerInput) },
+      },
+      resolve: (_, { input }) => new LayerModel(input).save(),
     },
     updateLayer: {
-      type: LayerType,
+      type: Layer,
       args: {
         id: { type: new GraphQLNonNull(GraphQLID) },
-        name: { type: GraphQLString },
-        features: { type: new GraphQLList(FeatureInputType) },
+        input: { type: new GraphQLNonNull(UpdateLayerInput) },
       },
-      resolve: async (_, { id, name, features }) => {
-        const layer = await LayerModel.findById(id);
-        if (!layer) throw new Error('Layer not found');
-        if (name !== undefined) layer.name = name;
-        if (features !== undefined) layer.features = features;
-        return layer.save();
+      resolve: async (_, { id, input }) => {
+        const updated = await LayerModel.findByIdAndUpdate(id, input, {
+          new: true,
+          runValidators: true,
+        });
+        if (!updated) {
+          throw new Error('Layer not found');
+        }
+        return updated;
+      },
+    },
+    deleteLayer: {
+      type: GraphQLBoolean,
+      args: {
+        id: { type: new GraphQLNonNull(GraphQLID) },
+      },
+      resolve: async (_, { id }) => {
+        const result = await LayerModel.findByIdAndDelete(id);
+        return !!result;
       },
     },
   },
 });
 
+// === Schema ===
+
 export const schema = new GraphQLSchema({
-  query: RootQuery,
+  query: Query,
   mutation: Mutation,
 });
