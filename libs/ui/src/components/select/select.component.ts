@@ -1,6 +1,8 @@
 import {
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
+  effect,
   input,
   model,
 } from '@angular/core';
@@ -19,7 +21,20 @@ export class SelectComponent {
   public options = input<SelectOption[]>();
   public selected = model<any>();
 
-  public onSelectionChange(event: Event) {
+  constructor(private cdr: ChangeDetectorRef) {
+    effect(() => {
+      const options = this.options();
+      if (options?.length) {
+        this.selected.set(options[0].value);
+      }
+    });
+  }
+
+  public onSelectionChange(event: Event): void {
     this.selected.set((event.target as HTMLSelectElement).value);
+  }
+
+  ngOnChanges(): void {
+    this.cdr.markForCheck();
   }
 }

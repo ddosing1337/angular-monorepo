@@ -13,7 +13,8 @@
   <div
     class="layer-edit-bar flex flex-row items-center p-1 justify-between h-16 border-b-2 border-gray-200"
   >
-    <div class="flex flex-row gap-1">
+    <div class="flex flex-row gap-1 items-center">
+      <span class="text-gray-700 font-medium text-sm">Add:</span>
       <ui-select
         [options]="layerEditOptions"
         placeholder="Select option"
@@ -22,15 +23,25 @@
       ></ui-select>
       <ui-button (click)="undoFeature()" class="w-16">Undo</ui-button>
     </div>
+    @if (uniteOptions.length) {
+    <div class="flex flex-row gap-1 items-center">
+      <span class="text-gray-700 font-medium text-sm">Unite with:</span>
+      <ui-select
+        [options]="uniteOptions"
+        placeholder="Select option"
+        [(selected)]="selectedUniteOption"
+        class="w-40 block"
+      ></ui-select>
+      <ui-button (click)="onUnite()" class="w-16">Unite</ui-button>
+    </div>
+    }
     <div class="flex flex-row gap-1">
       <ui-button (click)="saveLayer()" class="w-16">Save</ui-button>
       <ui-button (click)="cancelLayerEdit()" class="w-16">Cancel</ui-button>
     </div>
   </div>
   }
-  <app-map class="flex-1">
-    <!-- <div class="map-tooltip"></div> -->
-  </app-map>
+  <app-map class="flex-1"> </app-map>
 </div>
 
 @if(addLayerActive()) {
@@ -70,7 +81,7 @@
     <div
       class="flex flex-row flex-wrap w-full border-2 border-gray-200 rounded-sm mb-1 mt-1"
     >
-      @for (feature of featuresArray(); track feature) {
+      @for (feature of featuresArray(); track feature.get('id') ?? feature) {
       <div class="w-full text-gray-700">{{ feature | FeaturePipe }}</div>
       } @empty {
       <div class="w-full text-gray-700">No features added</div>

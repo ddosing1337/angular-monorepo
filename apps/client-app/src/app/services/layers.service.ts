@@ -136,7 +136,8 @@ export class LayersService {
             type: 'FeatureCollection',
             features: srcLayer.features,
           })
-          .map((feature) => {
+          .map((feature, index) => {
+            feature.set('id', srcLayer.features[index].id);
             const properties = feature.getProperties();
             if (properties['isCircle']) {
               const mapped = feature;

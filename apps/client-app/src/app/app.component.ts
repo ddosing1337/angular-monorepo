@@ -36,6 +36,10 @@ import { getArea, getLength } from 'ol/sphere';
 import { Circle, Geometry, Point } from 'ol/geom';
 import { fromEventPattern, Subject, takeUntil, throttleTime } from 'rxjs';
 import { fromCircle } from 'ol/geom/Polygon';
+import * as turf from '@turf/turf';
+import { GeoJSON } from 'ol/format';
+import { FeatureCollection, MultiPolygon, Polygon } from 'geojson';
+import { Coordinate } from 'ol/coordinate';
 
 enum FeatureType {
   None = 'None',
@@ -61,7 +65,6 @@ enum FeatureType {
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent {
   title = 'client-app';
@@ -75,15 +78,28 @@ export class AppComponent {
   public layerEditOptions!: SelectOption[];
   public featuresArray: WritableSignal<Array<Feature>> = signal([]);
   public tempLayer!: VectorLayer;
+  public uniteOptions!: SelectOption[];
+  public selectedUniteOption = signal<Feature | null>(null);
   private destroy$ = new Subject();
   private draw!: Draw;
   private transform!: Transform;
   private tooltip!: Tooltip;
+  private geojson = new GeoJSON();
+  private selectedFeature = signal<Feature | null>(null);
 
   constructor(private zone: NgZone, private layersService: LayersService) {
     effect(() => {
       this.map.removeInteraction(this.draw);
       this.addInteraction(this.selectedEditOption());
+    });
+
+    effect(() => {
+      const selectedFeature = this.selectedFeature();
+      this.refreshUniteOptions(selectedFeature);
+    });
+
+    effect(() => {
+      console.log(this.selectedUniteOption());
     });
   }
 
@@ -94,7 +110,7 @@ export class AppComponent {
     });
   }
 
-  ngOnDestroy() {
+  ngOnDestroy(): void {
     this.destroy$.next('');
     this.destroy$.complete();
   }
@@ -126,40 +142,16 @@ export class AppComponent {
     this.map.addOverlay(this.tooltip);
 
     //Tooltip tracking
-    this.map.on('singleclick', (evt) => {
-      if (untracked(() => this.layerEditActive())) {
-        return;
-      }
+    this.map.on('singleclick', (event) => {
       let found = false;
-      this.map.forEachFeatureAtPixel(evt.pixel, (feature) => {
-        const geom = feature.getGeometry() as Geometry;
-        const type = geom?.getType();
-        const projection = this.map.getView().getProjection();
-        let html = '';
-
-        if (type === 'Point') {
-          const coord = toLonLat((geom as Point).getCoordinates(), projection);
-          html = `Координаты: ${coord[0].toFixed(6)}, ${coord[1].toFixed(6)}`;
-        } else if (type?.includes('Line')) {
-          const length = getLength(geom, { projection });
-          html = `Длина: ${(length / 1000).toFixed(2)} км`;
-        } else if (type?.includes('Polygon')) {
-          const area = getArea(geom, { projection });
-          html = `Площадь: ${(area / 1_000_000).toFixed(2)} км²`;
-        } else if (type?.includes('Circle')) {
-          const area = getArea(fromCircle(geom as Circle, 64), { projection });
-          html = `Площадь: ${(area / 1_000_000).toFixed(2)} км²`;
-        }
-        this.tooltip.show(
-          evt.coordinate,
-          `${new FeaturePipe().transform(feature as Feature)}<br/>` + html
-        );
+      this.map.forEachFeatureAtPixel(event.pixel, (feature, layer) => {
+        if (!layer) return;
+        this.showFeatureTooltip(feature as Feature, event.coordinate);
         found = true;
-        return true;
       });
 
       if (!found) {
-        this.tooltip.hide();
+        this.hideFeatureTooltip();
       }
     });
 
@@ -221,11 +213,19 @@ export class AppComponent {
   public editLayer(): void {
     this.tempLayer = new VectorLayer({
       source: new VectorSource({
-        features: new Collection<Feature>(),
+        features: new Collection<Feature>(
+          untracked(() =>
+            this.selectedLayer()
+              ?.get('source')
+              .getFeatures()
+              .map((f: Feature) => f.clone())
+          )
+        ),
         wrapX: false,
       }),
     });
     this.map.addLayer(this.tempLayer);
+    untracked(() => this.selectedLayer()?.setVisible(false));
 
     this.transform = new Transform({
       layers: [this.tempLayer, untracked(() => this.selectedLayer())!],
@@ -235,6 +235,14 @@ export class AppComponent {
       enableRotatedTransform: true,
     });
     this.map.addInteraction(this.transform);
+
+    const select$ = fromEventPattern(
+      (handler) => this.transform.on('select', handler),
+      (handler) => this.transform.un('select', handler)
+    );
+    select$.subscribe((event: any) => {
+      this.selectedFeature.set(event.feature ?? null);
+    });
 
     this.layerEditActive.set(true);
   }
@@ -255,24 +263,32 @@ export class AppComponent {
     this.map.removeLayer(this.tempLayer);
     this.map.removeInteraction(this.transform);
     this.layerEditActive.set(false);
+    this.selectedFeature.set(null);
     this.selectedEditOption.set(FeatureType.None);
+    untracked(() => this.selectedLayer()?.setVisible(true));
   }
 
   public saveLayer(): void {
     untracked(() => {
-      this.selectedLayer()
-        ?.get('source')
-        .addFeatures(this.tempLayer.get('source').getFeatures());
-      this.layersService.updateLayer(this.selectedLayer()!).subscribe((res) => {
-        //feat: handle saving error
-        this.map.removeLayer(this.tempLayer);
-        this.featuresArray.set(
-          this.selectedLayer()?.get('source').getFeatures()
-        );
-        this.map.removeInteraction(this.transform);
-        this.layerEditActive.set(false);
-        this.selectedEditOption.set(FeatureType.None);
-      });
+      this.selectedLayer()?.setSource(this.tempLayer.get('source'));
+
+      this.layersService
+        .updateLayer(this.selectedLayer()!)
+        .subscribe((updated) => {
+          //feat: handle saving error
+          this.map.removeLayer(this.tempLayer);
+          let selectedLayer = this.selectedLayer();
+          selectedLayer?.setProperties(updated.getProperties());
+          selectedLayer?.setSource(updated.get('source'));
+
+          this.featuresArray.set(
+            this.selectedLayer()?.get('source').getFeatures()
+          );
+          this.map.removeInteraction(this.transform);
+          this.layerEditActive.set(false);
+          this.selectedEditOption.set(FeatureType.None);
+          untracked(() => this.selectedLayer()?.setVisible(true));
+        });
     });
   }
 
@@ -290,10 +306,100 @@ export class AppComponent {
     this.tempLayer.get('source').getFeaturesCollection().pop();
   }
 
+  public onUnite(): void {
+    untracked(() => {
+      const united = this.unitePolygons(
+        this.selectedFeature()!,
+        this.selectedUniteOption()!
+      );
+      console.log(united.getProperties());
+      const source = this.tempLayer.get('source');
+      source.removeFeatures([
+        this.selectedFeature(),
+        this.selectedUniteOption(),
+      ]);
+      source.addFeature(united);
+      this.transform.setSelection(new Collection<Feature>());
+      //this.selectedFeature.set(null);
+    });
+  }
+
   private refreshLayers(): void {
     this.layers.set(this.map.getAllLayers().slice(1));
     if (untracked(() => this.layers().length) !== 0) {
       this.selectLayer(untracked(() => this.layers()[0] as VectorLayer));
     }
+  }
+
+  private showFeatureTooltip(feature: Feature, coordinate: Coordinate): void {
+    const geom = feature.getGeometry() as Geometry;
+    const type = geom?.getType();
+    const projection = this.map.getView().getProjection();
+    let html = '';
+
+    if (type === 'Point') {
+      const coord = toLonLat((geom as Point).getCoordinates(), projection);
+      html = `Координаты: ${coord[0].toFixed(6)}, ${coord[1].toFixed(6)}`;
+    } else if (type?.includes('Line')) {
+      const length = getLength(geom, { projection });
+      html = `Длина: ${(length / 1000).toFixed(2)} км`;
+    } else if (type?.includes('Polygon')) {
+      const area = getArea(geom, { projection });
+      html = `Площадь: ${(area / 1_000_000).toFixed(2)} км²`;
+    } else if (type?.includes('Circle')) {
+      const area = getArea(fromCircle(geom as Circle, 64), { projection });
+      html = `Площадь: ${(area / 1_000_000).toFixed(2)} км²`;
+    }
+    this.tooltip.show(
+      coordinate,
+      `${new FeaturePipe().transform(feature)}<br/>` + html
+    );
+  }
+
+  private hideFeatureTooltip(): void {
+    this.tooltip.hide();
+  }
+
+  private refreshUniteOptions(selectedFeature: Feature | null): void {
+    if (
+      !selectedFeature ||
+      selectedFeature.getGeometry()?.getType() !== 'Polygon'
+    ) {
+      this.uniteOptions = [];
+      return;
+    }
+
+    this.uniteOptions = untracked(() =>
+      this.tempLayer
+        .get('source')
+        .getFeatures()
+        .filter(
+          (f: Feature) =>
+            f !== selectedFeature &&
+            f.getGeometry()?.getType() === 'Polygon' &&
+            this.intersecting(selectedFeature, f)
+        )
+        .map((f: Feature) => {
+          return { value: f, label: new FeaturePipe().transform(f) };
+        })
+    );
+  }
+
+  private intersecting(feature1: Feature, feature2: Feature): boolean {
+    const parsed1 = this.geojson.writeFeatureObject(feature1);
+    const parsed2 = this.geojson.writeFeatureObject(feature2);
+    return turf.booleanIntersects(parsed1, parsed2);
+  }
+
+  private unitePolygons(feature1: Feature, feature2: Feature): Feature {
+    const parsed1 = this.geojson.writeFeatureObject(feature1);
+    const parsed2 = this.geojson.writeFeatureObject(feature2);
+    const union = turf.union(
+      this.geojson.writeFeaturesObject([
+        feature1,
+        feature2,
+      ]) as FeatureCollection<Polygon | MultiPolygon>
+    );
+    return this.geojson.readFeature(union) as Feature;
   }
 }
