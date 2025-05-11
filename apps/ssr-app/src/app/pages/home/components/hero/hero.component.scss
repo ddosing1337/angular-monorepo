@@ -1,0 +1,87 @@
+@use '@styles/variables.scss' as *;
+@use 'sass:color';
+
+.hero {
+  padding: 6rem 2rem;
+
+  &__content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    animation: fadeIn 1s ease-out;
+  }
+
+  &__text {
+    flex: 1 1 500px;
+  }
+
+  &__title {
+    font-family: $font-primary;
+    font-size: 3rem;
+    color: $color-black;
+    margin-bottom: 1.5rem;
+  }
+
+  &__subtitle {
+    font-family: $font-primary;
+    font-size: 1.25rem;
+    color: $color-dark;
+    margin-bottom: 2rem;
+  }
+
+  &__cta {
+    font-family: $font-primary;
+    background-color: $color-green;
+    color: $color-black;
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+
+    &:hover {
+      background-color: color.adjust($color-green, $lightness: -10%);
+    }
+  }
+
+  &__image-wrapper {
+    flex: 1 1 500px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: slideIn 1.2s ease-out;
+  }
+
+  &__image {
+    width: 100%;
+    max-width: 500px;
+    height: auto;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(80px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
