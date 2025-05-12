@@ -1,0 +1,69 @@
+@use '@styles/variables.scss' as *;
+//@use 'sass:color';
+
+.footer {
+  &__container {
+    background-color: $color-dark;
+    border-top-left-radius: 45px;
+    border-top-right-radius: 45px;
+    padding: 3rem 3.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 3rem;
+  }
+
+  &__info {
+    flex: 1;
+    min-width: 280px;
+  }
+
+  &__title {
+    font-family: $font-primary;
+    font-size: 1.125rem;
+    color: $color-green;
+    margin: 0 0 1rem;
+    text-decoration-color: $color-green;
+    text-decoration-thickness: 2px;
+    text-decoration-line: underline;
+  }
+
+  &__address,
+  &__phone {
+    font-family: $font-primary;
+    font-size: 1rem;
+    color: $color-gray;
+    margin-bottom: 1rem;
+  }
+
+  .divider {
+    border: 1px solid $color-gray;
+    border-radius: 50%;
+    margin-bottom: 1rem;
+  }
+
+  &__socials {
+    display: flex;
+    flex-direction: row;
+    gap: 2rem;
+    justify-content: center;
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+
+    .footer__social-link {
+      display: block;
+      font-family: $font-primary;
+      font-size: 1rem;
+      color: $color-gray;
+      text-decoration: none;
+      margin-bottom: 1rem;
+
+      &:hover {
+        color: $color-green;
+      }
+    }
+  }
+}

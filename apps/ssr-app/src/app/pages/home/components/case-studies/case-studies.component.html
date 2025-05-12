@@ -1,0 +1,20 @@
+<section class="case-studies">
+  <div class="case-studies__container">
+    <h2 class="case-studies__title">Case Studies</h2>
+    <p class="case-studies__subtitle">
+      Explore some of our recent work and see the impact we’ve made for our
+      clients.
+    </p>
+
+    <div class="case-studies__grid">
+      @for (study of caseStudies; track $index) {
+      <div class="case-studies__card">
+        <h3 class="case-studies__card-title">{{ study.text }}</h3>
+        <button class="case-studies__read-more">Read more</button>
+      </div>
+      }
+    </div>
+
+    <button class="case-studies__see-all">See all case studies</button>
+  </div>
+</section>

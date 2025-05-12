@@ -1,11 +1,21 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HeroComponent } from './components/hero/hero.component';
-import { FeaturesComponent } from './components/features/features.component';
+import { HeaderComponent } from './components/header/header.component';
+import { CaseStudiesComponent } from './components/case-studies/case-studies.component';
+import { FooterComponent } from './components/footer/footer.component';
+import { TeamComponent } from './components/team/team.component';
 
 @Component({
   selector: 'app-home',
-  imports: [CommonModule, HeroComponent, FeaturesComponent],
+  imports: [
+    CommonModule,
+    HeroComponent,
+    HeaderComponent,
+    CaseStudiesComponent,
+    FooterComponent,
+    TeamComponent,
+  ],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

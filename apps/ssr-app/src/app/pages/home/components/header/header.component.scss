@@ -1,0 +1,68 @@
+@use '@styles/variables.scss' as *;
+@use 'sass:color';
+
+.header {
+  padding: 2rem;
+
+  &__container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+  }
+
+  &__logo {
+    font-family: $font-primary;
+    font-size: 1.75rem;
+    font-weight: bold;
+    color: $color-black;
+  }
+
+  &__nav {
+    display: flex;
+    gap: 2rem;
+    flex: 1;
+    justify-content: center;
+  }
+
+  &__link {
+    font-family: $font-primary;
+    color: $color-black;
+    text-decoration: none;
+    font-size: 1rem;
+    position: relative;
+
+    &:after {
+      content: '';
+      position: absolute;
+      width: 0%;
+      height: 2px;
+      background-color: $color-black;
+      left: 0;
+      bottom: -4px;
+      transition: width 0.3s;
+    }
+
+    &:hover::after {
+      width: 100%;
+    }
+  }
+
+  &__cta {
+    font-family: $font-primary;
+    background-color: $color-black;
+    color: $color-gray;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s;
+
+    &:hover {
+      background-color: color.adjust($color-black, $lightness: 10%);
+    }
+  }
+}
