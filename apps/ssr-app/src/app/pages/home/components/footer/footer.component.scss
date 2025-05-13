@@ -2,7 +2,9 @@
 //@use 'sass:color';
 
 .footer {
+  padding-top: 2rem;
   &__container {
+    box-sizing: border-box;
     background-color: $color-dark;
     border-top-left-radius: 45px;
     border-top-right-radius: 45px;
@@ -25,9 +27,6 @@
     font-size: 1.125rem;
     color: $color-green;
     margin: 0 0 1rem;
-    text-decoration-color: $color-green;
-    text-decoration-thickness: 2px;
-    text-decoration-line: underline;
   }
 
   &__address,

@@ -2,10 +2,9 @@
 @use 'sass:color';
 
 .hero {
-  padding: 6rem 2rem;
-
   &__content {
     max-width: 1200px;
+    padding: 2rem;
     margin: 0 auto;
     display: flex;
     flex-wrap: wrap;
@@ -37,10 +36,11 @@
     font-family: $font-primary;
     background-color: $color-green;
     color: $color-black;
-    padding: 1rem 2rem;
+    padding: $button-padding;
     border: none;
-    border-radius: 12px;
+    border-radius: $button-border-radius;
     font-weight: 500;
+    font-size: $button-font-size;
     cursor: pointer;
     transition: background-color 0.3s ease;
 

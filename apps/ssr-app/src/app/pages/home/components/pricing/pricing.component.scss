@@ -1,0 +1,172 @@
+@use '@styles/variables.scss' as *;
+@use 'sass:color';
+
+.pricing {
+  padding: 2rem;
+
+  &__container {
+    max-width: 1200px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  &__title {
+    font-size: 2.5rem;
+    color: $color-black;
+    margin-bottom: 0.5rem;
+    animation: fadeInUp 0.6s ease forwards;
+    @include title;
+  }
+
+  p.subtitle {
+    color: $color-dark;
+    font-weight: 400;
+    margin-bottom: 3rem;
+    animation: fadeInUp 0.6s ease 0.2s forwards;
+  }
+
+  .plans {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 2rem;
+
+    .plan-card {
+      background-color: $color-white;
+      border: 1px solid $color-dark;
+      border-bottom-width: 6px;
+      border-radius: 45px;
+      width: 300px;
+      padding: 2rem;
+      text-align: left;
+      position: relative;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      animation: fadeInUp 0.6s ease forwards;
+
+      &:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 12px 24px rgba($color-green, 0.3);
+      }
+
+      .label {
+        position: absolute;
+        top: 1.5rem;
+        right: 1.5rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        background-color: $color-green;
+        color: $color-black;
+        padding: 0.25rem 0.5rem;
+        border-radius: 24px;
+      }
+
+      .plan-title {
+        font-size: 1.25rem;
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+      }
+
+      .price {
+        font-size: 2rem;
+        font-weight: 500;
+
+        span {
+          font-size: 1rem;
+          font-weight: 500;
+        }
+      }
+
+      .buttons {
+        margin: 1.5rem 0;
+
+        button {
+          width: 100%;
+          padding: $button-padding;
+          font-family: $font-primary;
+          font-weight: 500;
+          font-size: $button-font-size;
+          border-radius: $button-border-radius;
+          border: 1px solid $color-black;
+          background-color: $color-black;
+          color: $color-white;
+          margin-bottom: 0.5rem;
+          transition: all 0.3s ease;
+          cursor: pointer;
+
+          &:hover {
+            transform: translateY(-2px);
+          }
+
+          &.quote {
+            background-color: transparent;
+            color: $color-black;
+            border: 1px solid $color-black;
+          }
+        }
+      }
+
+      .features {
+        list-style: none;
+        padding: 0;
+        margin-top: 1rem;
+
+        .feature {
+          margin: 0.5rem 0;
+          display: flex;
+          align-items: center;
+
+          &::before {
+            content: '✔';
+            margin-right: 0.5rem;
+            color: $color-green;
+            font-weight: 700;
+          }
+        }
+      }
+
+      &.highlighted {
+        background-color: $color-dark;
+        color: $color-white;
+        border-color: $color-green;
+
+        .price {
+          color: $color-white;
+        }
+
+        .buttons {
+          .get-started {
+            background-color: $color-green;
+            color: $color-black;
+            border: none;
+          }
+
+          .quote {
+            color: $color-black;
+            border: 1px solid $color-white;
+            color: $color-white;
+          }
+        }
+
+        .get-started {
+          background-color: $color-green;
+          color: $color-black;
+        }
+
+        .feature {
+          color: $color-white;
+        }
+      }
+    }
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

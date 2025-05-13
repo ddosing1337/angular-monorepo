@@ -5,6 +5,7 @@
   &__container {
     max-width: 1200px;
     margin: 0 auto;
+    padding: 2rem;
     text-align: center;
   }
 
@@ -12,10 +13,8 @@
     font-family: $font-primary;
     font-size: 2.5rem;
     color: $color-black;
-    margin-bottom: 1rem;
-    text-decoration-color: $color-green;
-    text-decoration-thickness: 4px;
-    text-decoration-line: underline;
+    margin: 0 0 1rem;
+    @include title;
   }
 
   &__subtitle {
@@ -37,7 +36,9 @@
 
   &__card {
     background-color: $color-dark;
-    border-radius: 20px;
+    border-radius: 45px;
+    border: 1px solid #b9ff66;
+    border-bottom-width: 6px;
     padding: 2rem 2rem;
     display: flex;
     flex-direction: column;
@@ -64,11 +65,13 @@
     font-family: $font-primary;
     background-color: $color-dark;
     color: $color-gray;
-    border: 2px solid $color-white;
-    padding: 0.5rem 1.25rem;
-    border-radius: 12px;
+    border: 1px solid $color-white;
+    padding: $button-padding;
+    border-radius: $button-border-radius;
+    font-size: $button-font-size;
     font-weight: 500;
     cursor: pointer;
+    transition: all 0.3s;
 
     &:hover {
       //color: $color-green;
@@ -80,10 +83,11 @@
     font-family: $font-primary;
     background-color: $color-green;
     color: $color-black;
-    padding: 0.75rem 2rem;
+    padding: $button-padding;
     border: none;
-    border-radius: 12px;
-    font-weight: 600;
+    border-radius: $button-border-radius;
+    font-weight: 500;
+    font-size: $button-font-size;
     cursor: pointer;
     transition: background-color 0.3s;
 

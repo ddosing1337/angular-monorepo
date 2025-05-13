@@ -8,3 +8,16 @@ $color-white: #ffffff;
 //Fonts
 $font-primary: 'Roboto Mono', monospace;
 $font-secondary: 'Roboto Slab', serif;
+
+//Buttons
+$button-font-size: 1rem;
+$button-padding: 1rem 2rem;
+$button-border-radius: 14px;
+
+@mixin title {
+  background-color: $color-green;
+  display: inline-block;
+  padding: 0 7px;
+  border-radius: 7px;
+  font-weight: 500;
+}

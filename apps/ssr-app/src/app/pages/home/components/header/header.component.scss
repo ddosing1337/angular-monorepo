@@ -13,13 +13,6 @@
     gap: 2rem;
   }
 
-  &__logo {
-    font-family: $font-primary;
-    font-size: 1.75rem;
-    font-weight: bold;
-    color: $color-black;
-  }
-
   &__nav {
     display: flex;
     gap: 2rem;
@@ -54,10 +47,11 @@
     font-family: $font-primary;
     background-color: $color-black;
     color: $color-gray;
-    padding: 0.75rem 1.5rem;
+    padding: $button-padding;
     border: none;
-    border-radius: 12px;
-    font-weight: 600;
+    border-radius: $button-border-radius;
+    font-weight: 500;
+    font-size: $button-font-size;
     cursor: pointer;
     transition: background-color 0.3s;
 
