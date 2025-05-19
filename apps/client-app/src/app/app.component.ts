@@ -36,7 +36,7 @@ import { getArea, getLength } from 'ol/sphere';
 import { Circle, Geometry, Point } from 'ol/geom';
 import { fromEventPattern, Subject, takeUntil, throttleTime } from 'rxjs';
 import { fromCircle } from 'ol/geom/Polygon';
-import * as turf from '@turf/turf';
+import { booleanIntersects, union } from '@turf/turf';
 import { GeoJSON } from 'ol/format';
 import { FeatureCollection, MultiPolygon, Polygon } from 'geojson';
 import { Coordinate } from 'ol/coordinate';
@@ -388,18 +388,18 @@ export class AppComponent {
   private intersecting(feature1: Feature, feature2: Feature): boolean {
     const parsed1 = this.geojson.writeFeatureObject(feature1);
     const parsed2 = this.geojson.writeFeatureObject(feature2);
-    return turf.booleanIntersects(parsed1, parsed2);
+    return booleanIntersects(parsed1, parsed2);
   }
 
   private unitePolygons(feature1: Feature, feature2: Feature): Feature {
     const parsed1 = this.geojson.writeFeatureObject(feature1);
     const parsed2 = this.geojson.writeFeatureObject(feature2);
-    const union = turf.union(
+    const united = union(
       this.geojson.writeFeaturesObject([
         feature1,
         feature2,
       ]) as FeatureCollection<Polygon | MultiPolygon>
     );
-    return this.geojson.readFeature(union) as Feature;
+    return this.geojson.readFeature(united) as Feature;
   }
 }
