@@ -32,17 +32,14 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      - name: Install deps
-        run: npm ci --legacy-peer-deps
-        uses: nrwl/nx-set-shas@v4
+      - run: npm ci --legacy-peer-deps
+      - uses: nrwl/nx-set-shas@v4
 
       # Prepend any command with "nx-cloud record --" to record its logs to Nx Cloud
       # - run: npx nx-cloud record -- echo Hello World
       # Nx Affected runs only tasks affected by the changes in this PR/commit. Learn more: https://nx.dev/ci/features/affected
-      - name: Build affected
-        run: npx nx affected -t build
+      - run: npx nx affected -t build
 
-      - name: Deploy to Render
-        run: curl "$RENDER_DEPLOY_HOOK_URL"
+      - run: curl "$RENDER_DEPLOY_HOOK_URL"
         env:
           RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
