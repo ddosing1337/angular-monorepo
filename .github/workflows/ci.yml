@@ -51,7 +51,7 @@ jobs:
           npx nx --version
 
           echo "=== echo "npx nx show projects"
-          npx nx show projects"
+          npx nx show projects
 
       # Prepend any command with "nx-cloud record --" to record its logs to Nx Cloud
       # - run: npx nx-cloud record -- echo Hello World
