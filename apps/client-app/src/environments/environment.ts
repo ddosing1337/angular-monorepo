@@ -1,4 +1,4 @@
 export const environment = {
-  production: false,
-  layersApiUrl: 'http://localhost:4000/graphql',
+  production: true,
+  layersApiUrl: 'https://server-r1gl.onrender.com/graphql',
 };
