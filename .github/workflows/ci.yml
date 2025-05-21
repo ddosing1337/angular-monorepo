@@ -41,14 +41,14 @@ jobs:
       - name: Get affected apps
         id: affected
         run: |
-          echo "apps=$(nx affected:apps --plain)" >> "$GITHUB_ENV"
+          echo "apps=$(nx affected:apps --plain)" >> "$GITHUB_OUTPUT"
 
       - name: Deploy server if affected
-        if: contains($apps, 'server-app')
+        if: contains(steps.affected.outputs.apps, 'server-app')
         run: |
-          curl -X POST ${{ secrets.RENDER_DEPLOY_SERVER_URL }}
+          curl ${{ secrets.RENDER_DEPLOY_SERVER_URL }}
 
       - name: Deploy client if affected
-        if: contains($apps, 'client-app')
+        if: contains(steps.affected.outputs.apps, 'client-app')
         run: |
-          curl -X POST ${{ secrets.RENDER_DEPLOY_CLIENT_URL }}
+          curl ${{ secrets.RENDER_DEPLOY_CLIENT_URL }}
