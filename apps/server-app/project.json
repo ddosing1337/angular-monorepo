@@ -21,6 +21,13 @@
           "buildTarget": "server-app:build:production"
         }
       }
+    },
+    "start": {
+      "options": {
+        "command": "node dist/apps/server-app/main.js"
+      },
+      "executor": "nx:run-commands",
+      "configurations": {}
     }
   }
 }
