@@ -38,17 +38,10 @@ jobs:
       # Nx Affected runs only tasks affected by the changes in this PR/commit. Learn more: https://nx.dev/ci/features/affected
       - run: npx nx affected -t build
 
-      - name: Get affected apps
-        id: affected
-        run: |
-          echo "apps=$(npx nx affected:apps --plain)" >> "$GITHUB_OUTPUT"
-
-      - name: Deploy server if affected
-        if: contains(steps.affected.outputs.apps, 'server-app')
+      - name: Deploy server
         run: |
           curl ${{ secrets.RENDER_DEPLOY_SERVER_URL }}
 
-      - name: Deploy client if affected
-        if: contains(steps.affected.outputs.apps, 'client-app')
+      - name: Deploy client
         run: |
           curl ${{ secrets.RENDER_DEPLOY_CLIENT_URL }}
