@@ -40,7 +40,8 @@ jobs:
 
       - name: Get affected apps
         id: affected
-        run: echo "::set-output name=apps::$(npx nx affected:apps --plain)"
+        run: |
+          echo "apps=$(npx nx affected:apps --plain)" >> $GITHUB_OUTPUT
 
       - name: Deploy server if affected
         if: contains(steps.affected.outputs.apps, 'server-app')
