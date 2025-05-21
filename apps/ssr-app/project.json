@@ -8,16 +8,12 @@
   "targets": {
     "build": {
       "executor": "@angular-devkit/build-angular:application",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/apps/ssr-app",
         "index": "apps/ssr-app/src/index.html",
         "browser": "apps/ssr-app/src/main.ts",
-        "polyfills": [
-          "zone.js"
-        ],
+        "polyfills": ["zone.js"],
         "tsConfig": "apps/ssr-app/tsconfig.app.json",
         "assets": [
           {
@@ -97,6 +93,13 @@
         "staticFilePath": "dist/apps/ssr-app/browser",
         "spa": true
       }
+    },
+    "start": {
+      "options": {
+        "command": "node dist/apps/ssr-app/server/server.mjs"
+      },
+      "executor": "nx:run-commands",
+      "configurations": {}
     }
   }
 }

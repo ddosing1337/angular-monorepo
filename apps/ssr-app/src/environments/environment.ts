@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  clientUrl: 'prod-client-url.com',
+  clientUrl: 'https://client-sots.onrender.com',
 };
