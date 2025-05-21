@@ -10,9 +10,7 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 4000;
 
-app.use(
-  cors({ origin: 'https://client-sots.onrender.com', credentials: true })
-);
+app.use(cors({ origin: process.env.CLIENT_ORIGIN, credentials: true }));
 app.use(express.json());
 
 mongoose
