@@ -45,3 +45,7 @@ jobs:
       - name: Deploy client
         run: |
           curl ${{ secrets.RENDER_DEPLOY_CLIENT_URL }}
+
+      - name: Deploy ssr
+        run: |
+          curl ${{ secrets.RENDER_DEPLOY_SSR_URL }}
