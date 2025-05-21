@@ -41,8 +41,8 @@ jobs:
       - name: Get affected apps
         id: affected
         run: |
-          apps=$(npx nx show projects --affected --type=app --plain)
-          echo "apps=$apps" >> $GITHUB_OUTPUT
+          apps=$(npx nx print-affected --type=app --select=projects)
+          echo "apps=$apps" >> "$GITHUB_OUTPUT"
 
       - name: Deploy server if affected
         if: contains(steps.affected.outputs.apps, 'server-app')
