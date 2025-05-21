@@ -33,6 +33,26 @@ jobs:
       - run: npm ci --legacy-peer-deps
       - uses: nrwl/nx-set-shas@v4
 
+      - name: Debug workspace
+        run: |
+          echo "=== pwd ==="
+          pwd
+
+          echo "=== ls -la ==="
+          ls -la
+
+          echo "=== nx.json ==="
+          cat nx.json
+
+          echo "=== apps/server-app/project.json ==="
+          cat apps/server-app/project.json
+
+          echo "=== npx nx --version ==="
+          npx nx --version
+
+          echo "=== echo "npx nx show projects"
+          npx nx show projects"
+
       # Prepend any command with "nx-cloud record --" to record its logs to Nx Cloud
       # - run: npx nx-cloud record -- echo Hello World
       # Nx Affected runs only tasks affected by the changes in this PR/commit. Learn more: https://nx.dev/ci/features/affected
