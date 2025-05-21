@@ -20,7 +20,10 @@ export const appConfig: ApplicationConfig = {
       const httpLink = inject(HttpLink);
 
       return {
-        link: httpLink.create({ uri: environment.layersApiUrl }),
+        link: httpLink.create({
+          uri: environment.layersApiUrl,
+          withCredentials: true,
+        }),
         cache: new InMemoryCache(),
       };
     }),
